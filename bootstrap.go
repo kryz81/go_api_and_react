@@ -9,18 +9,22 @@ import (
 	"github.com/kryz81/go_api_and_react/middleware"
 	"github.com/kryz81/go_api_and_react/services"
 	"github.com/kryz81/go_api_and_react/types"
+	"github.com/kryz81/go_api_and_react/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
+	"net/http"
 	"os"
 )
 
 func initializeEnvironment() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
+	godotenv.Load()
+	mode := gin.ReleaseMode
+	if os.Getenv("ENV") == "dev" {
+		mode = gin.DebugMode
 	}
+	gin.SetMode(mode)
 }
 
 func createDbConnection() *mongo.Database {
@@ -49,6 +53,11 @@ func addRoutes(appContext types.AppContext) *gin.Engine {
 		users.DELETE("/:id", handlerCtx.UserDeleteHandler)
 	}
 
+	// serve frontend
+	router.GET("/", handlers.IndexHandler(FrontendFs))
+	router.StaticFS("/static", http.FS(utils.GetFrontendAssetsRoute(FrontendFs)))
+	router.StaticFileFS("/favicon.ico", "frontend/build/favicon.ico", http.FS(FrontendFs))
+
 	return router
 }
 
@@ -68,5 +77,7 @@ func bootstrapApp() *gin.Engine {
 	}
 
 	router := addRoutes(appContext)
+	router.SetTrustedProxies(nil)
+
 	return router
 }

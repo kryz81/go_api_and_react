@@ -14,7 +14,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = app.Run(fmt.Sprintf(":%d", port))
-	log.Fatal(err)
-	log.Printf("Listening on %d", port)
+	log.Fatal(app.Run(fmt.Sprintf(":%d", port)))
 }
